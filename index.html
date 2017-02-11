@@ -44,9 +44,11 @@
 			float y = (gl_FragCoord.y-height/2.0)*radius/(height/2.0);
 			float curve = sqrt(x*x*x+a*x+b);
 			float tone1 = abs (abs(y) - abs(curve)) < 0.01?1.0:0.0;
-			float tone2 = abs(y) < curve?1.0:0.0;
-			float tone3 = abs(abs(y) - curve);
-			gl_FragColor = vec4(1.0-tone2,tone2,1,1.0);
+			if(abs(y) < curve){
+				gl_FragColor = vec4(0.1,1,0.01,0.3);
+			} else {
+				gl_FragColor = vec4(0.1,0.01,1,0.3);
+			}
 		}
 	</script>
 	<script>
