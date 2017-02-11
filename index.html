@@ -45,9 +45,9 @@
 			float curve = sqrt(x*x*x+a*x+b);
 			float tone1 = abs (abs(y) - abs(curve)) < 0.01?1.0:0.0;
 			if(abs(y) < curve){
-				gl_FragColor = vec4(0.1,1,0.01,0.3);
+				gl_FragColor = vec4(0,1,0.5,0.3);
 			} else {
-				gl_FragColor = vec4(0.1,0.01,1,0.3);
+				gl_FragColor = vec4(0.1,0.01,1,0.4);
 			}
 		}
 	</script>
