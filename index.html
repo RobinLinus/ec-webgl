@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+
+		<!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame
+		Remove this if you use the .htaccess -->
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+		<title>Elliptic curves</title>
+		<meta name="description" content="">
+		<meta name="author" content="Linus">
+
+		<meta name="viewport" content="width=device-width; initial-scale=1.0">
+
+		<!-- Replace favicon.ico & apple-touch-icon.png in the root of your domain and delete these references -->
+		<link rel="shortcut icon" href="/favicon.ico">
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+		<style type="text/css">
+			body{
+				margin: 0;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+
+	<body>
+	<canvas id="myCanvas" width="1000" height="1000"/>
+	<script type="x-shader/x-vertex" id="vertexShader">
+		attribute vec2 a_position;
+		void main(){
+			gl_Position = vec4(a_position,0,1);
+		}  
+	</script>
+	<script type="x-shader/x-fragment" id="fragmentShader">
+		precision mediump float;
+		uniform float a; 
+		uniform float b;
+		uniform float width;
+		uniform float height; 
+		uniform float radius; 
+		void main(){
+			float x = (gl_FragCoord.x-width/2.0)*radius/(height/2.0);
+			float y = (gl_FragCoord.y-height/2.0)*radius/(height/2.0);
+			float curve = sqrt(x*x*x+a*x+b);
+			float tone1 = abs (abs(y) - abs(curve)) < 0.01?1.0:0.0;
+			float tone2 = abs(y) < curve?1.0:0.0;
+			float tone3 = abs(abs(y) - curve);
+			gl_FragColor = vec4(1.0-tone2,tone2,1,1.0);
+		}
+	</script>
+	<script>
+	var canvas = document.getElementById("myCanvas");
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+	var gl = canvas.getContext("webgl");
+// List available extensions
+	console.log(gl.getSupportedExtensions( ));
+// Ensure OpenGL viewport is resized to match canvas dimensions
+	gl.viewportWidth = canvas.width;
+	gl.viewportHeight = canvas.height;
+// Set screen clear color to R, G, B, alpha; where 0.0 is 0% and 1.0 is 100%
+	gl.clearColor(0.0, 1.0, 0.0, 1.0);
+// Enable color; required for clearing the screen
+	gl.clear(gl.COLOR_BUFFER_BIT);
+// Clear out the viewport with solid black color
+	gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+// hacky shader yoo !
+	function compile() {
+	    var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+	    gl.shaderSource(vertexShader, document.getElementById("vertexShader").text);
+
+	    gl.compileShader(vertexShader);
+	    if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+	        console.error(gl.getShaderInfoLog(vertexShader));
+	        return false;
+	    }
+
+	    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+	    gl.shaderSource(fragmentShader, document.getElementById("fragmentShader").text);
+
+	    gl.compileShader(fragmentShader);
+	    if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+	        console.error(gl.getShaderInfoLog(fragmentShader));
+	        return false;
+	    }
+
+	   var shaderProgram = gl.createProgram();
+	    gl.attachShader(shaderProgram, vertexShader);
+	    gl.attachShader(shaderProgram, fragmentShader);
+	    gl.linkProgram(shaderProgram);
+
+	    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) return false;
+	    return shaderProgram;
+	}
+	const shaderProgram = compile();
+    gl.useProgram(shaderProgram);
+	const buffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+	const attrib = gl.getAttribLocation(shaderProgram, "a_position");
+// turn on getting data out of a buffer for this attribute
+	gl.enableVertexAttribArray(attrib);
+	gl.vertexAttribPointer(attrib, 2, gl.FLOAT, false, 8, 0);
+	const uniformA = gl.getUniformLocation(shaderProgram,'a');
+	const uniformB = gl.getUniformLocation(shaderProgram,'b');
+	const uniformWidth = gl.getUniformLocation(shaderProgram,'width');
+	const uniformHeigth = gl.getUniformLocation(shaderProgram,'height');
+	const uniformRadius = gl.getUniformLocation(shaderProgram,'radius');
+// store attributes
+	let alpha = 0;
+	let zoom = 5.0;
+	function render(){
+		window.requestAnimationFrame(render, canvas);
+		alpha += 0.027;
+		gl.uniform1f(uniformA,7*(Math.sin(alpha*0.3)+Math.sin(alpha*0.6)));
+		gl.uniform1f(uniformB,3*(Math.sin(alpha)+Math.sin(alpha*2)));
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+		gl.uniform1f(uniformRadius,zoom);
+		//gl.flush();
+	}
+
+
+
+	function resize(){
+		const width = window.innerWidth;
+		const height = window.innerHeight;
+		canvas.width = width;
+		canvas.height = height;
+		gl.viewportWidth = width;
+		gl.viewportHeight = height;
+		gl.uniform1f(uniformWidth,width);
+		gl.uniform1f(uniformHeigth,height);
+	}
+
+	resize();
+	render();
+
+	window.onresize=function(){
+		window.requestAnimationFrame(resize, canvas);
+	};
+
+	</script>
+		
+	</body>
+</html>
